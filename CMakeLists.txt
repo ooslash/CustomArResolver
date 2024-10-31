@@ -1,10 +1,12 @@
-cmake_minimum_required(VERSION 3.29)
-project(FTH_AR)
+cmake_minimum_required(VERSION 3.29 FATAL_ERROR)
+project(FTH_AR VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 list(APPEND CMAKE_PREFIX_PATH "/home/vfx/packages_cache/houdini/20.0.688/5c54/a/toolkit/cmake")
+
+include(handleBoostNamespace)
 
 #find_package(USD REQUIRED)
 find_package(fmt REQUIRED)
@@ -22,6 +24,9 @@ endif ()
 #######################################################################
 
 set(USD_PLUGIN_NAME "FTHArResolver")
+
+# install...
+set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
 
 add_subdirectory(src)
 

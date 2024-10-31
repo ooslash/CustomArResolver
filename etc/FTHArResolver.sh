@@ -1,0 +1,7 @@
+#!/bin/bash
+
+
+export AR_RESOLVER_LOCATION="$1"
+
+export PYTHONPATH="${AR_RESOLVER_LOCATION}/lib/python3.10/site-packages:${PYTHONPATH}"
+export PXR_PLUGINPATH_NAME="$AR_RESOLVER_LOCATION/plugin/usd:${PXR_PLUGINPATH_NAME}"

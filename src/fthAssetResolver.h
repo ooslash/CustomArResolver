@@ -38,6 +38,9 @@ PXR_NAMESPACE_OPEN_SCOPE
         AR_API
         ~FTHArResolver() override = default;
 
+        AR_API
+        static void SetDefaultSearchPath(const std::vector<std::string> &searchPath);
+
     protected:
         AR_API
         std::string

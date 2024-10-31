@@ -48,6 +48,7 @@ PXR_NAMESPACE_OPEN_SCOPE
 #define FTH_PREFIX      "FTHArResolver:"
 #define FTH_PREFIX_LEN  14
 
+TfStaticData<std::vector<std::string>> _SearchPath;
 
     std::string
     FTHArResolver::_CreateIdentifier(const std::string &assetPath, const ArResolvedPath &anchorAssetPath) const {
@@ -103,6 +104,10 @@ PXR_NAMESPACE_OPEN_SCOPE
     std::shared_ptr<ArWritableAsset>
     FTHArResolver::_OpenAssetForWrite(const ArResolvedPath &resolvedPath, ArResolver::WriteMode writeMode) const {
         return ArFilesystemWritableAsset::Create(_ResolveForNewAsset(resolvedPath), writeMode);
+    }
+
+    void FTHArResolver::SetDefaultSearchPath(const std::vector<std::string> &searchPath) {
+        *_SearchPath = searchPath;
     }
 
 PXR_NAMESPACE_CLOSE_SCOPE
