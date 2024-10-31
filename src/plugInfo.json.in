@@ -1,0 +1,20 @@
+{
+  "Plugins": [
+    {
+      "Info": {
+        "Types": {
+          "fthAr": {
+            "bases": ["ArResolver"],
+            "uriSchemes": ["fth"],
+            "displayName": "4th Asset Resolver"
+          }
+        }
+      },
+      "LibraryPath": "../@libraryName@",
+      "Name": "fthAr",
+      "ResourcePath": "resources",
+      "Root": "..",
+      "Type": "library"
+    }
+  ]
+}
