@@ -28,12 +28,49 @@ description   :
 
 PXR_NAMESPACE_OPEN_SCOPE
 
-class FTHArResolverContext {
-public:
-    FTHArResolverContext() = default;
+    class FTHArResolverContext {
+    public:
+        FTHArResolverContext() = default;
+
+        AR_API
+        FTHArResolverContext(const std::vector<std::string> &searchPath);
+
+        AR_API
+        void AddReplacePair(const std::string &oldStr, const std::string &newStr);
+
+        const std::map<std::string, std::string> &GetReplaceMap() const {
+            return _oldAndNewStrings;
+        }
+
+        AR_API
+        bool operator<(const FTHArResolverContext &ref) const;
+
+        AR_API
+        bool operator==(const FTHArResolverContext &ref) const;
+
+        AR_API
+        bool operator!=(const FTHArResolverContext &ref) const;
+
+        const std::vector<std::string> &GetSearchPath() const {
+            return _searchPath;
+        }
+
+        AR_API
+        std::string GetAsString() const;
+
+    private:
+        std::vector<std::string> _searchPath;
+        std::map<std::string, std::string> _oldAndNewStrings;
+    };
 
     AR_API
-};
+    size_t hash_value(const FTHArResolverContext &context);
+
+    inline std::string ArGetDebugString(const FTHArResolverContext &context) {
+        return context.GetAsString();
+    }
+
+    AR_DECLARE_RESOLVER_CONTEXT(FTHArResolverContext);
 
 PXR_NAMESPACE_CLOSE_SCOPE
 

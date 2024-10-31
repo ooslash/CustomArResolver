@@ -11,8 +11,9 @@ add_library(${USD_PLUGIN_NAME}
         SHARED
         fthAssetResolver.h
         fthAssetResolver.cpp
-        #        fthAssetResolverContext.cpp
-        #        fthAssetResolverContext.h
+        boostHeaderWrapper.h
+        fthAssetResolverContext.h
+        fthAssetResolverContext.cpp
 )
 
 #target_include_directories(${USD_PLUGIN_NAME}
