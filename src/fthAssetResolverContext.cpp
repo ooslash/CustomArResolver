@@ -24,7 +24,7 @@ description   :
 
 #include "boostHeaderWrapper.h"
 
-#include BOOST_INCLUDE(functional / hash.hpp)
+#include BOOST_INCLUDE(functional/hash.hpp)
 
 PXR_NAMESPACE_OPEN_SCOPE
 

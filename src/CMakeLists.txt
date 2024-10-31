@@ -14,6 +14,10 @@ add_library(${USD_PLUGIN_NAME}
         boostHeaderWrapper.h
         fthAssetResolverContext.h
         fthAssetResolverContext.cpp
+        debugCodes.cpp
+        debugCodes.h
+        tokens.cpp
+        tokens.h
 )
 
 #target_include_directories(${USD_PLUGIN_NAME}

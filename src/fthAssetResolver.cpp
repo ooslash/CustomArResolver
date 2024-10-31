@@ -49,7 +49,6 @@ PXR_NAMESPACE_OPEN_SCOPE
 #define FTH_PREFIX_LEN  14
 
 
-
     std::string
     FTHArResolver::_CreateIdentifier(const std::string &assetPath, const ArResolvedPath &anchorAssetPath) const {
         if (assetPath.empty()) {

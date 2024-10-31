@@ -19,11 +19,18 @@ description   :
 #include <pxr/pxr.h>
 #include <pxr/usd/ar/api.h>
 #include <pxr/usd/ar/resolver.h>
+#include <pxr/usd/ar/threadLocalScopedCache.h>
 #include <pxr/base/vt/value.h>
+
+#include <tbb/enumerable_thread_specific.h>
+
+#include <memory>
+#include <string>
+#include <vector>
 
 PXR_NAMESPACE_OPEN_SCOPE
 
-    class FTHArResolver : public ArResolver {
+    class FTHArResolver final : public ArResolver {
     public:
         AR_API
         FTHArResolver() = default;
