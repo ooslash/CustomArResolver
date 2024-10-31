@@ -11,7 +11,7 @@
         }
       },
       "LibraryPath": "../@libraryName@",
-      "Name": "fthAr",
+      "Name": "4th Asset Resolver",
       "ResourcePath": "resources",
       "Root": "..",
       "Type": "library"
