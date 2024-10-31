@@ -33,10 +33,21 @@ set_boost_namespace(${USD_PLUGIN_NAME})
 #        fmt::fmt
 #)
 
-target_link_libraries(${USD_PLUGIN_NAME}
-        Houdini
-        fmt::fmt
-)
+if (WIN32)
+    target_link_libraries(${USD_PLUGIN_NAME}
+            Houdini
+            fmt::fmt
+            HoudiniThirdParty
+    )
+    if( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
+        target_compile_options( ${USD_PLUGIN_NAME} PRIVATE "/Zc:inline-" )
+    endif()
+else ()
+    target_link_libraries(${USD_PLUGIN_NAME}
+            Houdini
+            fmt::fmt
+    )
+endif ()
 
 target_include_directories(${USD_PLUGIN_NAME}
         PRIVATE
@@ -57,7 +68,7 @@ set(libraryName ${USD_PLUGIN_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
 
 configure_file(
         plugInfo.json.in
-#        ${CMAKE_BINARY_DIR}/plugInfo.json
+        #        ${CMAKE_BINARY_DIR}/plugInfo.json
         ${CMAKE_INSTALL_PREFIX}/plugInfo.json
         @ONLY
 )
@@ -76,7 +87,7 @@ install(
 
 if (NOT EXISTS ${CMAKE_INSTALL_PREFIX}/plugin/usd/plugInfo.json)
     configure_file(
-#            ${USD_PLUGINS_DIR}/plugInfo.json
+            #            ${USD_PLUGINS_DIR}/plugInfo.json
             ${CMAKE_INSTALL_PREFIX}/plugInfo.json
             ${CMAKE_INSTALL_PREFIX}/plugin/usd/plugInfo.json
             COPYONLY
@@ -129,6 +140,7 @@ if (PXR_ENABLE_PYTHON_SUPPORT)
             MFB_PACKAGE_NAME=${USD_PLUGIN_NAME}
             MFB_ALT_PACKAGE_NAME=${USD_PLUGIN_NAME}
             MFB_PACKAGE_MODULE=fth.${MODULE_NAME}
+            AR_EXPORTS
     )
 
     target_link_libraries(${USD_PLUGIN_PYTHON_NAME}
