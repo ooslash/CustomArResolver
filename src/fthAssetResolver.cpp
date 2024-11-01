@@ -55,6 +55,11 @@ PXR_NAMESPACE_OPEN_SCOPE
 
     TfStaticData<std::vector<std::string>> _SearchPath;
 
+    struct FTHArResolver::_Cache{
+        using _PathToResolvedPathMap = tbb::concurrent_hash_map<std::string, std::string>;
+        _PathToResolvedPathMap _pathToResolvedPathMap;
+    };
+
     bool _GetReplacePairsFromUsdFile(const std::string &filePath, FTHArResolverContext &context) {
         bool found = false;
         auto layer = SdfLayer::FindOrOpen(TfAbsPath(filePath));
@@ -121,7 +126,7 @@ PXR_NAMESPACE_OPEN_SCOPE
         }
         std::string resolvedPath;
         if(_CachePtr currentCache = _GetCurrentCache()){
-            asdf
+            _Cache::
         }
     }
 
