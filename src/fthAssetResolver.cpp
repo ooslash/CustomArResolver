@@ -13,7 +13,10 @@ description   :
 // Created by vfx on 10/30/24.
 //
 
+#include "debugCodes.h"
 #include "fthAssetResolver.h"
+#include "fthAssetResolverContext.h"
+#include "tokens.h"
 
 #include <pxr/base/arch/fileSystem.h>
 #include <pxr/base/arch/systemInfo.h>
@@ -32,9 +35,11 @@ description   :
 #include <pxr/usd/ar/filesystemWritableAsset.h>
 #include <pxr/usd/ar/resolverContext.h>
 #include <pxr/usd/sdf/layer.h>
+#include <pxr/usd/sdf/path.h>
 
 #include <fmt/core.h>
 #include <fmt/color.h>
+#include <spdlog/spdlog.h>
 
 #include <tbb/concurrent_hash_map.h>
 #include <fstream>
@@ -48,7 +53,157 @@ PXR_NAMESPACE_OPEN_SCOPE
 #define FTH_PREFIX      "FTHArResolver:"
 #define FTH_PREFIX_LEN  14
 
-TfStaticData<std::vector<std::string>> _SearchPath;
+    TfStaticData<std::vector<std::string>> _SearchPath;
+
+    bool _GetReplacePairsFromUsdFile(const std::string &filePath, FTHArResolverContext &context) {
+        bool found = false;
+        auto layer = SdfLayer::FindOrOpen(TfAbsPath(filePath));
+        if (layer) {
+            auto layerMetaData = layer->GetMetadata();
+            auto replaceData = layerMetaData->Get(SdfPath::AbsoluteRootPath(), SdfFieldKeys->CustomLayerData);
+
+            if (!replaceData.IsEmpty()) {
+                TF_DEBUG(REPLACERESOLVER_REPLACE).Msg("Replace metadata found in file: \"%s\"\n", filePath.c_str());
+
+                VtDictionary dic = replaceData.Get<VtDictionary>();
+                auto it = dic.find(FTHArResolverTokens->replacePairs);
+                if (it != dic.end()) {
+                    VtValue allPairsValue = dic[FTHArResolverTokens->replacePairs];
+                    VtStringArray allPairs = allPairsValue.Get<VtStringArray>();
+                    if (allPairs.size() > 0) {
+                        found = true;
+                        for (size_t i = 0; i < allPairs.size(); i += 2) {
+                            context.AddReplacePair(allPairs[i], allPairs[i + 1]);
+                        }
+                    }
+                }
+            }
+        }
+        return found;
+    }
+
+    bool _GetReplacePairsFromJsonFile(const std::string &filePath, FTHArResolverContext &context) {
+        bool found = false;
+
+        std::string assetDir = TfGetPathName(TfAbsPath(filePath));
+        std::string replaceFilePath = TfNormPath(TfStringCatPaths(assetDir, FTHArResolverTokens->replaceFileName));
+
+        std::ifstream ifs(replaceFilePath);
+
+        if (ifs) {
+            TF_DEBUG(REPLACERESOLVER_REPLACE).Msg("Replace file found: \"%s\"\n", replaceFilePath.c_str());
+
+            JsParseError error;
+            const JsValue value = JsParseStream(ifs, &error);
+            ifs.close();
+
+            if (!value.IsNull() && value.IsArray()) {
+                if (value.GetJsArray().size() > 0) {
+                    found = true;
+                    for (const auto &pair: value.GetJsArray()) {
+                        if (pair.IsArray()) {
+                            context.AddReplacePair(pair.GetJsArray()[0].GetString(), pair.GetJsArray()[1].GetString());
+                        }
+                    }
+                }
+            } else {
+                fprintf(stderr, "Error: parse error at %s:%d:%d: %s\n", replaceFilePath.c_str(), error.line,
+                        error.column, error.reason.c_str());
+            }
+        }
+        return found;
+    }
+
+    std::string FTHArResolver::ResolveWithAssetInfo(const std::string &assetPath, ArAssetInfo *assetInfo){
+        TF_DEBUG(REPLACERESOLVER_PATH).Msg("Unresolved Path: \"%s\"\n", assetPath.c_str());
+        if(assetPath.empty()){
+            return assetPath;
+        }
+        std::string resolvedPath;
+        if(_CachePtr currentCache = _GetCurrentCache()){
+            asdf
+        }
+    }
+
+    std::string FTHArResolver::_ResolveNoCache(const std::string& path) {
+        SdfPath _sdfPath = SdfPath(path);
+        if (_sdfPath.IsEmpty()) {
+            return path;
+        }
+
+        if(!_sdfPath.IsAbsolutePath()) {
+            std::string resolvedPath = _Resolve(ArchGetCwd(), path);
+            if (!resolvedPath.empty()) {
+                return resolvedPath;
+            }
+
+            // Check if path is a search path, replacing IsSearchPath functionality
+            auto currentContext = _GetCurrentContext();
+            const ReplaceResolverContext* contexts[] = {currentContext, &_fallbackContext};
+
+            if (currentContext) {
+                TF_DEBUG(REPLACERESOLVER_CURRENTCONTEXT).Msg(
+                            "ReplaceResolverContext: \"%s\"\n",
+                            ArResolverContext(*currentContext).GetDebugString().c_str());
+            }
+
+            for (const auto* ctx : contexts) {
+                if (ctx) {
+                    // Apply context-based replacements to the path
+                    std::string replacedPath = _ReplaceFromContext(*ctx, path);
+
+                    // Attempt to resolve path against each search directory
+                    for (const auto& searchPath : ctx->GetSearchPath()) {
+                        resolvedPath = _Resolve(searchPath, replacedPath);
+                        if (!resolvedPath.empty()) {
+                            return resolvedPath;
+                        }
+                    }
+                }
+            }
+
+            return {};
+        }
+
+        // Absolute path resolution
+        return _Resolve({}, path);
+    }
+
+    bool _IsFileRelative(const std::string &path) {
+        return path.find("./") == 0 || path.find("../") == 0;
+    }
+
+    void FTHArResolver::ConfigureResolverForAsset(const std::string &path) {
+        this->_defaultContext = CreateDefaultContextForAsset(path);
+    }
+
+    std::vector<std::string> _GetSearchPaths() {
+        std::vector<std::string> searchPath = *_SearchPath;
+
+        const std::string envPath = TfGetenv("PXR_AR_DEFAULT_SEARCH_PATH");
+        if (!envPath.empty()) {
+            const std::vector<std::string> envSearchPath = TfStringTokenize(envPath, ARCH_PATH_LIST_SEP);
+            searchPath.insert(searchPath.end(), envSearchPath.begin(), envSearchPath.end());
+        }
+
+        return searchPath;
+    }
+
+    ArResolverContext FTHArResolver::CreateDefaultContextForAsset(const std::string &filePath) {
+        if (filePath.empty()) {
+            return ArResolverContext(FTHArResolverContext());
+        }
+        auto context = FTHArResolverContext(_GetSearchPaths());
+
+        std::string extension = TfGetExtension(filePath);
+        if (extension == "usd" || extension == "usda" || extension == "usdc") {
+            _GetReplacePairsFromUsdFile(filePath, context);
+        }
+
+        _GetReplacePairsFromJsonFile(filePath, context);
+
+        return ArResolverContext(context);
+    }
 
     std::string
     FTHArResolver::_CreateIdentifier(const std::string &assetPath, const ArResolvedPath &anchorAssetPath) const {

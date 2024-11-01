@@ -7,6 +7,7 @@
 # modified date : 2024.10.30
 # description   :
 
+
 add_library(${USD_PLUGIN_NAME}
         SHARED
         fthAssetResolver.h

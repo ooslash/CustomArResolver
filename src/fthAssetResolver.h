@@ -13,8 +13,21 @@ description   :
 // Created by vfx on 10/30/24.
 //
 
+/*
+ * Removed
+ *
+ * ArResolver::AnchorRelativePath
+ * ArResolver::IsRelativePath
+ * ArResolver::IsRepositoryPath
+ * ArResolver::IsSearchPath
+ * ArResolver::ComputeNormalizedPath
+ * ArResolver::ComputeRepositoryPath
+*/
+
 #ifndef FTH_AR_FTHASSETRESOLVER_H
 #define FTH_AR_FTHASSETRESOLVER_H
+
+#include "fthAssetResolverContext.h"
 
 #include <pxr/pxr.h>
 #include <pxr/usd/ar/api.h>
@@ -41,6 +54,15 @@ PXR_NAMESPACE_OPEN_SCOPE
         AR_API
         static void SetDefaultSearchPath(const std::vector<std::string> &searchPath);
 
+        AR_API
+        void ConfigureResolverForAsset(const std::string &path);
+
+        AR_API
+        ArResolverContext CreateDefaultContextForAsset(const std::string &filePath);
+
+        AR_API
+        std::string ResolveWithAssetInfo(const std::string &assetPath, ArAssetInfo *assetInfo);
+
     protected:
         AR_API
         std::string
@@ -62,6 +84,27 @@ PXR_NAMESPACE_OPEN_SCOPE
         AR_API
         std::shared_ptr<ArWritableAsset>
         _OpenAssetForWrite(const ArResolvedPath &resolvedPath, WriteMode writeMode) const override;
+
+    private:
+        struct _Cache;
+        using _PerThreadCache = ArThreadLocalScopedCache<_Cache>;
+        using _CachePtr = _PerThreadCache::CachePtr;
+
+        _CachePtr _GetCurrentCache();
+
+        const FTHArResolverContext *_GetCurrentContext();
+
+        std::string _ResolveNoCache(const std::string &path);
+
+    private:
+        FTHArResolverContext _fallbackContext;
+        ArResolverContext _defaultContext;
+
+        _PerThreadCache _threadCache;
+
+        using _ContextStack = std::vector<const FTHArResolverContext *>;
+        using _PerThreadContextStack = tbb::enumerable_thread_specific<_ContextStack>;
+        _PerThreadContextStack _threadContextStack;
     };
 
 PXR_NAMESPACE_CLOSE_SCOPE
